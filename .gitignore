@@ -1,0 +1,8 @@
+# Dependency folders
+node_modules/
+# Environment variables (Sensitive info)
+.env
+# Firebase Private Key (Security)
+firebase-config.json
+# VS Code settings
+.vscode/
