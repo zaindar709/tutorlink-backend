@@ -19,6 +19,10 @@ const UserSchema = new mongoose.Schema({
         type: String, 
         required: false 
     },
+    phoneNumber: { 
+        type: String, 
+        required: false // SMS functionality ke liye
+    },
     role: { 
         type: String, 
         required: true, 

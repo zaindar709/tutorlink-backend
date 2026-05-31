@@ -1,0 +1,79 @@
+===========================================================
+PROJECT: TUTORLINK - BACKEND TESTING EVIDENCE
+===========================================================
+
+-----------------------------------------------------------
+SCENARIO 1: NEW USER REGISTRATION (TUTOR)
+Type: Positive Test Case
+Purpose: To verify that a new tutor can be successfully added to MongoDB.
+-----------------------------------------------------------
+URL: http://localhost:5000/api/auth/register
+METHOD: POST
+BODY:
+{
+  "firebaseUid": "asad-unique-id-786",
+  "name": "Asad Khan",
+  "email": "asad@test.com",
+  "password": "SecurePassword123",
+  "confirmPassword": "SecurePassword123",
+  "role": "tutor"
+}
+
+-----------------------------------------------------------
+SCENARIO 2: PASSWORD MISMATCH (VALIDATION ERROR)
+Type: Negative Test Case
+Purpose: To show that the system prevents registration if passwords don't match.
+-----------------------------------------------------------
+URL: http://localhost:5000/api/auth/register
+METHOD: POST
+BODY:
+{
+  "firebaseUid": "test-uid-999",
+  "name": "Validation Test",
+  "email": "error@test.com",
+  "password": "Password123",
+  "confirmPassword": "WrongPassword456",
+  "role": "student"
+}
+
+-----------------------------------------------------------
+SCENARIO 3: SUCCESSFUL LOGIN (TUTOR)
+Type: Positive Test Case
+Purpose: To verify that the registered tutor can log in with correct credentials.
+-----------------------------------------------------------
+URL: http://localhost:5000/api/auth/login
+METHOD: POST
+BODY:
+{
+  "email": "asad@test.com",
+  "firebaseUid": "asad-unique-id-786",
+  "role": "tutor"
+}
+
+-----------------------------------------------------------
+SCENARIO 4: ACCOUNT NOT FOUND (WRONG EMAIL/ROLE)
+Type: Negative Test Case
+Purpose: To verify error handling when an unregistered email or wrong role is provided.
+-----------------------------------------------------------
+URL: http://localhost:5000/api/auth/login
+METHOD: POST
+BODY:
+{
+  "email": "nonexistent@test.com",
+  "firebaseUid": "random-uid",
+  "role": "tutor"
+}
+
+-----------------------------------------------------------
+SCENARIO 5: INVALID CREDENTIALS (WRONG FIREBASE UID)
+Type: Negative Test Case
+Purpose: To verify that the system blocks login if the UID does not match the database.
+-----------------------------------------------------------
+URL: http://localhost:5000/api/auth/login
+METHOD: POST
+BODY:
+{
+  "email": "asad@test.com",
+  "firebaseUid": "wrong-uid-input",
+  "role": "tutor"
+}

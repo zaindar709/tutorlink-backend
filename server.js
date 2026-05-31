@@ -13,7 +13,7 @@ app.use(cors());
 // 3. Firebase Admin Setup 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
-});
+}); 
 console.log("🔥 Firebase Admin Initialized!");
 
 // 4. Body Parser (JSON data handle karne ke liye)
@@ -34,6 +34,6 @@ app.get('/', (req, res) => {
 });
 
 const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server started on http://localhost:${PORT}`);
+app.listen(5000, "0.0.0.0", () => {
+  console.log("Server running on port 5000");
 });
