@@ -77,3 +77,6 @@ BODY:
   "firebaseUid": "wrong-uid-input",
   "role": "tutor"
 }
+
+Api endpoints :
+http://localhost:5000/api/tutors/search

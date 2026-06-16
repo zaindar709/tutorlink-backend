@@ -2,8 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors'); 
 const admin = require('firebase-admin'); 
-const serviceAccount = require('./firebase-config.json'); 
-require('dotenv').config();
+// dotenv ko top par load karna zaroori hai taake process.env pehle chal jaye
+require('dotenv').config(); 
+
+// SMART FIREBASE CONFIG: Local computer par file uthaye ga, Render par Env Variable!
+let serviceAccount;
+if (process.env.FIREBASE_CONFIG_JSON) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
+} else {
+  serviceAccount = require('./firebase-config.json');
+}
 
 const app = express();
 
@@ -19,8 +27,9 @@ console.log("🔥 Firebase Admin Initialized!");
 // 4. Body Parser (JSON data handle karne ke liye)
 app.use(express.json());
 
-// Auth Routes
+// Routes Registration
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/tutors', require('./routes/tutorRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -33,7 +42,8 @@ app.get('/', (req, res) => {
   res.send("TutorLink Server is Running!");
 });
 
-const PORT = 5000;
-app.listen(5000, "0.0.0.0", () => {
-  console.log("Server running on port 5000");
+// Dynamic Port Setup for Render
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

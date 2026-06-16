@@ -6,3 +6,4 @@ node_modules/
 firebase-config.json
 # VS Code settings
 .vscode/
+testing_data.txt
