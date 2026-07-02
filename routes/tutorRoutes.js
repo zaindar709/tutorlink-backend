@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Tutor = require('../models/Tutor');
+const authMiddleware = require('../middleware/authMiddleware');
 
-//  TUTOR ADVANCED SEARCH & FILTER API
-router.post('/search', async (req, res) => {
+//  TUTOR ADVANCED SEARCH & FILTER API (Protected)
+router.post('/search', authMiddleware, async (req, res) => {
     try {
         const {
             subject,
@@ -15,15 +16,17 @@ router.post('/search', async (req, res) => {
             experience,
             gender,
             availability,
-            isVerified,
             //  Map Location parameters
             studentLat,
             studentLng,
             radiusInKm = 10 // Default radius 10 kilometer hai
         } = req.body;
 
-        // Dynamic query object
-        let query = {};
+        // Dynamic query object — only approved, verified tutors are visible to students
+        let query = {
+            isVerified: true,
+            onboardingStatus: 'approved'
+        };
 
         // 1. Basic Filters Apply Karna
         if (subject) query.subjects = { $in: [subject] };
@@ -31,7 +34,6 @@ router.post('/search', async (req, res) => {
         if (teachingMode) query.teachingMode = teachingMode;
         if (gender) query.gender = gender;
         if (availability !== undefined) query.availability = availability;
-        if (isVerified !== undefined) query.isVerified = isVerified;
         
         // 2. Range Filters (Fee, Rating, Experience)
         if (minFee || maxFee) {

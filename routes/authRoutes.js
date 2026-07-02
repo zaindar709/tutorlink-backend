@@ -1,50 +1,57 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 
-// Models Import
 const User = require('../models/User');
 const Student = require('../models/Student');
 const Tutor = require('../models/Tutor');
 const Parent = require('../models/Parent');
+const { createWalletOnSignup } = require('../services/walletService');
 
-// --- 1. Register Route (Called after Firebase Signup Success) --- 
+async function createRoleProfile(role, userId, session) {
+    if (role === 'student') {
+        await Student.create([{ user: userId }], { session });
+    } else if (role === 'tutor') {
+        await Tutor.create([{ user: userId }], { session });
+    } else if (role === 'parent') {
+        await Parent.create([{ user: userId }], { session });
+    }
+}
+
+// --- 1. Register Route (Called after Firebase Signup Success) ---
 router.post('/register', async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { firebaseUid, name, email, role, phoneNumber } = req.body;
 
-        // Check if user already exists in MongoDB via firebaseUid
-        let user = await User.findOne({ firebaseUid });
-        if (user) {
-            return res.status(400).json({ message: "User profile already exists" });
+        const existingUser = await User.findOne({ firebaseUid }).session(session);
+        if (existingUser) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: 'User profile already exists' });
         }
 
-        // Save profile directly (No password field stored here)
-        user = new User({ 
-            firebaseUid, 
-            name,  
-            email, 
-            role, 
-            phoneNumber 
-        });
-        await user.save(); 
+        const [user] = await User.create(
+            [{ firebaseUid, name, email, role, phoneNumber }],
+            { session }
+        );
 
-        // Create role-specific sub-profiles
-        if (role === 'student') {
-            await Student.create({ user: user._id });
-        } else if (role === 'tutor') {
-            await Tutor.create({ user: user._id });
-        } else if (role === 'parent') {
-            await Parent.create({ user: user._id });
-        }
+        await createRoleProfile(role, user._id, session);
+        await createWalletOnSignup(user._id, role, session);
+
+        await session.commitTransaction();
 
         res.status(201).json({
-            message: "User profile created successfully",
+            message: 'User profile created successfully',
             user
         });
-
     } catch (error) {
-        console.error("Registration Error:", error);
-        res.status(500).json({ message: "Server Error", error: error.message });
+        await session.abortTransaction();
+        console.error('Registration Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    } finally {
+        session.endSession();
     }
 });
 
@@ -52,16 +59,15 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, firebaseUid } = req.body;
-        
-        // Find user by Firebase UID
+
         const user = await User.findOne({ firebaseUid });
 
         if (!user) {
-            return res.status(404).json({ message: "Account profile not found" });
+            return res.status(404).json({ message: 'Account profile not found' });
         }
 
         res.status(200).json({
-            message: "Login Successful!",
+            message: 'Login Successful!',
             user: {
                 id: user._id,
                 name: user.name,
@@ -70,32 +76,46 @@ router.post('/login', async (req, res) => {
                 phoneNumber: user.phoneNumber
             }
         });
-    } catch (error) { 
-        console.error("Login Error:", error);
-        res.status(500).json({ message: "Server Error", error: error.message });
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 });
 
 // --- 3. Google Login Route (Kept identical as it matches our structural flow) ---
-router.post("/google-login", async (req, res) => {
+router.post('/google-login', async (req, res) => {
     try {
         const { name, email, firebaseUid, role } = req.body;
-        let user = await User.findOne({ firebaseUid });
+        const existingUser = await User.findOne({ firebaseUid });
 
-        if (user) {
-            return res.status(200).json({ message: "Login successful with Google", user });
+        if (existingUser) {
+            return res.status(200).json({ message: 'Login successful with Google', user: existingUser });
         }
 
-        user = new User({ name, email, firebaseUid, role, phoneNumber: "" });
-        await user.save();
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
-        if (role === 'student') { await Student.create({ user: user._id }); }
-        else if (role === 'tutor') { await Tutor.create({ user: user._id }); }
-        else if (role === 'parent') { await Parent.create({ user: user._id }); }
+        try {
+            const [user] = await User.create(
+                [{ name, email, firebaseUid, role, phoneNumber: '' }],
+                { session }
+            );
 
-        res.status(201).json({ message: "Account created via Google", user });
+            await createRoleProfile(role, user._id, session);
+            await createWalletOnSignup(user._id, role, session);
+
+            await session.commitTransaction();
+
+            res.status(201).json({ message: 'Account created via Google', user });
+        } catch (error) {
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            session.endSession();
+        }
     } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
+        console.error('Google Login Error:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 });
 
@@ -104,7 +124,7 @@ router.get('/profile/:id', async (req, res) => {
     try {
         const userId = req.params.id.trim();
         const user = await User.findById(userId);
-        if (!user) { return res.status(404).json({ message: "User not Found" }); }
+        if (!user) { return res.status(404).json({ message: 'User not Found' }); }
 
         let profileData = null;
         if (user.role === 'student') { profileData = await Student.findOne({ user: userId }); }
@@ -113,7 +133,7 @@ router.get('/profile/:id', async (req, res) => {
 
         res.status(200).json({ user, details: profileData });
     } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 });
 

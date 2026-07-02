@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); 
-const admin = require('firebase-admin'); 
-// dotenv ko top par load karna zaroori hai taake process.env pehle chal jaye
+const cors = require('cors');
+const path = require('path');
+const admin = require('firebase-admin');// dotenv ko top par load karna zaroori hai taake process.env pehle chal jaye
 require('dotenv').config(); 
 
 // SMART FIREBASE CONFIG: Local computer par file uthaye ga, Render par Env Variable!
@@ -27,9 +27,18 @@ console.log("🔥 Firebase Admin Initialized!");
 // 4. Body Parser (JSON data handle karne ke liye)
 app.use(express.json());
 
+// Uploaded tutor documents (local disk; replace with cloud storage in production)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes Registration
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tutors', require('./routes/tutorRoutes'));
+app.use('/api/tutor/onboarding', require('./routes/tutorOnboardingRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/wallet', require('./routes/walletRoutes'));
+app.use('/api/billing', require('./routes/billingRoutes'));
+app.use('/api/profile', require('./routes/profileRoutes'));
+app.use('/api/home', require('./routes/homeRoutes'));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI)

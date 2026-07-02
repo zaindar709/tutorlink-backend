@@ -14,7 +14,29 @@ const tutorSchema = new mongoose.Schema({
     teachingMode: { type: String, enum: ['Online', 'In-Person', 'Both'], default: 'Both' },
     rating: { type: Number, default: 4.0 },
     availability: { type: Boolean, default: true },
-    
+
+    onboardingStep: {
+        type: Number,
+        enum: [1, 2, 3],
+        default: 1
+    },
+    onboardingStatus: {
+        type: String,
+        enum: ['basic_info', 'documents_uploaded', 'under_review', 'interview_scheduled', 'approved', 'rejected'],
+        default: 'basic_info'
+    },
+    cnicFrontUrl: { type: String, default: '' },
+    cnicBackUrl: { type: String, default: '' },
+    degreeCertificateUrl: { type: String, default: '' },
+    documentsSubmittedAt: { type: Date },
+    reviewNotes: { type: String, default: '' },
+    adminNotes: { type: String, default: '' },
+    rejectionReason: { type: String, default: '' },
+    verifiedAt: { type: Date, default: null },
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    interviewScheduledAt: { type: Date, default: null },
+    interviewLink: { type: String, default: '' },
+
     //  Map Par Plot Karne Ke Liye Location (GeoJSON format)
     location: {
         type: {

@@ -6,4 +6,8 @@ node_modules/
 firebase-config.json
 # VS Code settings
 .vscode/
+# Local uploaded files
+uploads/
 testing_data.txt
+BOOKING_MODULE_README.md
+WALLET_MODULE_README.md

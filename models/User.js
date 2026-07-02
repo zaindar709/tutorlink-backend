@@ -1,37 +1,37 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-    firebaseUid: { 
-        type: String, 
-        required: true, 
-        unique: true 
+    firebaseUid: {
+        type: String,
+        required: true,
+        unique: true
     },
-    name: { 
-        type: String, 
-        required: true 
+    name: {
+        type: String,
+        required: true
     },
-    email: { 
-        type: String, 
-        required: true, 
-        unique: true 
+    email: {
+        type: String,
+        required: true,
+        unique: true
     },
-    password: { 
-        type: String, 
-        required: false 
+    phoneNumber: {
+        type: String,
+        required: false
     },
-    phoneNumber: { 
-        type: String, 
-        required: false // SMS functionality ke liye
+    avatarUrl: {
+        type: String,
+        default: ''
     },
-    role: { 
-        type: String, 
-        required: true, 
-        enum: ['student', 'tutor', 'parent'], 
-        default: 'student' 
+    role: {
+        type: String,
+        required: true,
+        enum: ['student', 'tutor', 'parent', 'admin'],
+        default: 'student'
     },
-    createdAt: { 
-        type: Date, 
-        default: Date.now 
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 
