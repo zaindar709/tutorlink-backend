@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const admin = require('firebase-admin');// dotenv ko top par load karna zaroori hai taake process.env pehle chal jaye
 require('dotenv').config(); 
@@ -14,6 +15,13 @@ if (process.env.FIREBASE_CONFIG_JSON) {
 }
 
 const app = express();
+
+// Security headers (Helmet) — applied before routes; CORP cross-origin keeps /uploads usable from clients
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 
 // 2. CORS Setup 
 app.use(cors()); 

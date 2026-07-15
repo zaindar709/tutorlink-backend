@@ -115,7 +115,6 @@ transactionSchema.pre('save', async function () {
 transactionSchema.index({ userId: 1, createdAt: -1 });
 transactionSchema.index({ walletId: 1, createdAt: -1 });
 transactionSchema.index({ bookingId: 1 });
-transactionSchema.index({ transactionId: 1 }, { unique: true });
 transactionSchema.index({ type: 1, escrowStatus: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

@@ -43,6 +43,4 @@ const userPreferencesSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-userPreferencesSchema.index({ userId: 1 }, { unique: true });
-
 module.exports = mongoose.model('UserPreferences', userPreferencesSchema);

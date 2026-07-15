@@ -75,7 +75,6 @@ studentSchema.pre('save', async function () {
     }
 });
 
-studentSchema.index({ publicId: 1 }, { unique: true, sparse: true });
 studentSchema.index({ user: 1 }, { unique: true });
 
 module.exports = mongoose.model('Student', studentSchema);
