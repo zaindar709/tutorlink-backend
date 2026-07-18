@@ -7,6 +7,16 @@ const Student = require('../models/Student');
 const Tutor = require('../models/Tutor');
 const Parent = require('../models/Parent');
 const { createWalletOnSignup } = require('../services/walletService');
+const verifyFirebaseToken = require('../middleware/verifyFirebaseToken');
+
+const PUBLIC_ROLES = new Set(['student', 'tutor', 'parent']);
+
+function validatePublicRole(role) {
+    if (!PUBLIC_ROLES.has(role)) {
+        return false;
+    }
+    return true;
+}
 
 async function createRoleProfile(role, userId, session) {
     if (role === 'student') {
@@ -19,12 +29,25 @@ async function createRoleProfile(role, userId, session) {
 }
 
 // --- 1. Register Route (Called after Firebase Signup Success) ---
-router.post('/register', async (req, res) => {
+router.post('/register', verifyFirebaseToken, async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const { firebaseUid, name, email, role, phoneNumber } = req.body;
+        // Body fields still accepted; identity comes from verified token only
+        const { name, role, phoneNumber } = req.body;
+        const firebaseUid = req.firebase.uid;
+        const email = req.firebase.email;
+
+        if (!email) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: 'Email is required on the Firebase account' });
+        }
+
+        if (!validatePublicRole(role)) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: 'Invalid role. Allowed roles: student, tutor, parent' });
+        }
 
         const existingUser = await User.findOne({ firebaseUid }).session(session);
         if (existingUser) {
@@ -49,16 +72,17 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         await session.abortTransaction();
         console.error('Registration Error:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(500).json({ message: 'Server Error' });
     } finally {
         session.endSession();
     }
 });
 
 // --- 2. Login Route (Called after Firebase Login Success) ---
-router.post('/login', async (req, res) => {
+router.post('/login', verifyFirebaseToken, async (req, res) => {
     try {
-        const { email, firebaseUid } = req.body;
+        // Body may still include email/firebaseUid; identity from token only
+        const firebaseUid = req.firebase.uid;
 
         const user = await User.findOne({ firebaseUid });
 
@@ -78,18 +102,30 @@ router.post('/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login Error:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(500).json({ message: 'Server Error' });
     }
 });
 
-// --- 3. Google Login Route (Kept identical as it matches our structural flow) ---
-router.post('/google-login', async (req, res) => {
+// --- 3. Google Login Route ---
+router.post('/google-login', verifyFirebaseToken, async (req, res) => {
     try {
-        const { name, email, firebaseUid, role } = req.body;
+        // Body may still include firebaseUid/email; identity from token only
+        const { name, role } = req.body;
+        const firebaseUid = req.firebase.uid;
+        const email = req.firebase.email;
+
         const existingUser = await User.findOne({ firebaseUid });
 
         if (existingUser) {
             return res.status(200).json({ message: 'Login successful with Google', user: existingUser });
+        }
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required on the Firebase account' });
+        }
+
+        if (!validatePublicRole(role)) {
+            return res.status(400).json({ message: 'Invalid role. Allowed roles: student, tutor, parent' });
         }
 
         const session = await mongoose.startSession();
@@ -115,7 +151,7 @@ router.post('/google-login', async (req, res) => {
         }
     } catch (error) {
         console.error('Google Login Error:', error);
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(500).json({ message: 'Server Error' });
     }
 });
 
