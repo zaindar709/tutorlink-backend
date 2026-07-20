@@ -114,6 +114,7 @@ router.post('/google-login', verifyFirebaseToken, async (req, res) => {
         const firebaseUid = req.firebase.uid;
         const email = req.firebase.email;
 
+
         const existingUser = await User.findOne({ firebaseUid });
 
         if (existingUser) {
